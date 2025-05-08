@@ -67,7 +67,7 @@ const IfNode = ({ id }: NodeProps) => {
   };
 
   const handleRemoveCondition = (conditionId: string) => {
-    const { [conditionId]: removed, ...remaining } = data.conditions;
+    const { [conditionId]: _, ...remaining } = data.conditions;
     updateNode(id, {
       ...data,
       conditions: remaining,

@@ -17,10 +17,9 @@
   "dependencies": {
     "@mantine/core": "^7.17.4",
     "@mantine/hooks": "^7.17.4",
-    "@next/bundle-analyzer": "^15.3.1",
     "@tabler/icons-react": "^3.31.0",
     "@xyflow/react": "^12.6.0",
-    "next": "^15.3.1",
+    "next": "^15.3.2",
     "react": "^19.1.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
@@ -29,6 +28,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.3.1",
     "@next/eslint-plugin-next": "^15.3.1",
     "@types/node": "^22.14.1",
     "@types/react": "19.1.2",
@@ -50,5 +50,5 @@
     "stylelint-config-standard-scss": "^14.0.0",
     "typescript": "5.8.3"
   },
-  "packageManager": "pnpm@9.4.0+sha512.f549b8a52c9d2b8536762f99c0722205efc5af913e77835dbccc3b0b0b2ca9e7dc8022b78062c17291c48e88749c70ce88eb5a74f1fa8c4bf5e18bb46c8bd83a"
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

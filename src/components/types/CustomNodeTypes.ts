@@ -27,7 +27,7 @@ type BaseNodeData = {
   };
 
   [NodeType.If]: {
-    variableId: string;
+    variableId?: string;
     conditions: Record<
       string,
       {
@@ -48,10 +48,8 @@ export type Scene = {
   id: string;
   name: string;
   nodes: Record<string, CustomNode>;
-  edges: Record<string, CustomEdge>;
+  edges: Record<string, Edge>;
 };
-
-export interface CustomEdge extends Edge {}
 
 export const NODE_COLORS = {
   [NodeType.Dialogue]: '#4CAF50',

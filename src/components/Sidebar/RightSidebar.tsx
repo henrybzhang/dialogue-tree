@@ -130,8 +130,8 @@ const RightSidebar = ({ opened, onToggle }: RightSidebarProps) => {
   const isVariableInUse = (variableId: string) => {
     const nodes = getNodesArray();
     return nodes.some((node) => {
-      const data = node.data as any; // TODO: fix this when variables are used in other node types
-      return data.variables?.includes(variableId);
+      const data = node.data as NodeData[NodeType.If];
+      return data.variableId === variableId;
     });
   };
 
@@ -162,16 +162,12 @@ const RightSidebar = ({ opened, onToggle }: RightSidebarProps) => {
       });
       removeCharacter(id);
     } else {
-      const variableName = variables[id].name;
       // Remove variable from all nodes that use it
       const nodes = getNodesArray();
       nodes.forEach((node) => {
-        const data = node.data as any;
-        if (data.variables?.includes(variableName)) {
-          updateNode(node.id, {
-            ...data,
-            variables: data.variables.filter((v: string) => v !== variableName),
-          });
+        const data = node.data as NodeData[NodeType.If];
+        if (data.variableId === id) {
+          updateNode(node.id, { title: data.title, conditions: {} });
         }
       });
       removeVariable(id);
@@ -473,7 +469,7 @@ const RightSidebar = ({ opened, onToggle }: RightSidebarProps) => {
           setEditModalOpen(false);
           setEditingItem(null);
         }}
-        title={`Edit ${editingItem ? editingItem?.type.charAt(0).toUpperCase() + editingItem?.type.slice(1) : "undefined"}`}
+        title={`Edit ${editingItem ? editingItem?.type.charAt(0).toUpperCase() + editingItem?.type.slice(1) : 'undefined'}`}
       >
         {editingItem && (
           <Stack>

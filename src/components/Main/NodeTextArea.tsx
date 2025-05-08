@@ -4,6 +4,7 @@ import {
   NodeData,
   NODE_COLORS,
   CustomNode,
+  IfOperator,
 } from '@/src/components/types/CustomNodeTypes';
 import {
   Textarea,
@@ -21,7 +22,7 @@ import { Node } from '@xyflow/react';
 
 interface NodeTextAreaProps {
   node: CustomNode;
-  onChange: (nodeChange: { nodeId: string; newData: any }) => void;
+  onChange: (nodeChange: { nodeId: string; newData: NodeData[NodeType] }) => void;
   indentLevel: number;
   optionId?: string;
 }
@@ -29,7 +30,7 @@ interface NodeTextAreaProps {
 interface NodeContentProps {
   node: Node;
   content: string | number | boolean;
-  onChange: (nodeChange: { nodeId: string; newData: any }) => void;
+  onChange: (nodeChange: { nodeId: string; newData: NodeData[NodeType] }) => void;
   optionId?: string;
 }
 
@@ -42,7 +43,7 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
           onChange({
             nodeId: node.id,
             newData: {
-              ...node.data,
+              ...(node.data as NodeData[NodeType.Dialogue]),
               dialogue: e.target.value,
             },
           })
@@ -66,7 +67,7 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
           onChange({
             nodeId: node.id,
             newData: {
-              ...node.data,
+              ...(node.data as NodeData[NodeType.Choice]),
               choices: {
                 ...(node.data as NodeData[NodeType.Choice]).choices,
                 [optionId]: e.target.value,
@@ -85,7 +86,7 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
         }}
       />
     );
-  } else if (typeof content === 'number') {
+  } else if (typeof content === 'number' && optionId) {
     return (
       <NumberInput
         value={content}
@@ -93,8 +94,14 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
           onChange({
             nodeId: node.id,
             newData: {
-              ...node.data,
-              value: value,
+              ...(node.data as NodeData[NodeType.If]),
+              conditions: {
+                ...(node.data as NodeData[NodeType.If]).conditions,
+                [optionId]: {
+                  type: (node.data as NodeData[NodeType.If]).conditions[optionId].type,
+                  value: value,
+                },
+              },
             },
           })
         }
@@ -108,7 +115,7 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
         }}
       />
     );
-  } else if (typeof content === 'boolean') {
+  } else if (typeof content === 'boolean' && optionId) {
     return (
       <Checkbox
         checked={content}
@@ -116,8 +123,14 @@ const NodeContent: React.FC<NodeContentProps> = ({ node, content, onChange, opti
           onChange({
             nodeId: node.id,
             newData: {
-              ...node.data,
-              value: e.currentTarget.checked,
+              ...(node.data as NodeData[NodeType.If]),
+              conditions: {
+                ...(node.data as NodeData[NodeType.If]).conditions,
+                [optionId]: {
+                  type: (node.data as NodeData[NodeType.If]).conditions[optionId].type,
+                  value: e.currentTarget.checked,
+                },
+              },
             },
           })
         }
@@ -203,7 +216,7 @@ const NodeTextArea: React.FC<NodeTextAreaProps> = ({ node, onChange, indentLevel
                   conditions: {
                     ...data.conditions,
                     [optionId]: {
-                      type: value,
+                      type: value as IfOperator,
                       value: data.conditions[optionId].value,
                     },
                   },
@@ -219,7 +232,8 @@ const NodeTextArea: React.FC<NodeTextAreaProps> = ({ node, onChange, indentLevel
           {
             type: 'node' as const,
             value: data.targetNodeId,
-            options: getNodesArray().map((n: any) => ({ value: n.id, label: n.data.title })) || [],
+            options:
+              getNodesArray().map((n: CustomNode) => ({ value: n.id, label: n.data.title })) || [],
             onChange: (value: string) => {
               onChange({
                 nodeId: node.id,

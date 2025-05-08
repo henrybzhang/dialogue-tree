@@ -5,24 +5,25 @@ import {
   EdgeChange,
   applyNodeChanges,
   applyEdgeChanges,
+  Edge,
 } from '@xyflow/react';
 import { v4 as uuid } from 'uuid';
-import { NodeType, NodeData, CustomNode, CustomEdge } from '@/src/components/types/CustomNodeTypes';
+import { NodeType, NodeData, CustomNode } from '@/src/components/types/CustomNodeTypes';
 import { useProjectStore } from './useProjectStore';
 
 interface SceneState {
   updateNode: (nodeId: string, data: NodeData[NodeType]) => void;
   addNode: (type: NodeType, position: XYPosition) => void;
-  addEdge: (edge: CustomEdge) => void;
+  addEdge: (edge: Edge) => void;
   removeNode: (nodeId: string) => void;
   removeEdge: (edgeId: string) => void;
   getNode: (nodeId: string) => CustomNode | undefined;
-  getEdge: (edgeId: string) => CustomEdge | undefined;
+  getEdge: (edgeId: string) => Edge | undefined;
   getNodesArray: () => CustomNode[];
-  getEdgesArray: () => CustomEdge[];
+  getEdgesArray: () => Edge[];
   updateNodes: (changes: NodeChange[]) => void;
   updateEdges: (changes: EdgeChange[]) => void;
-  cleanupEdgesForNodes: (nodeIds: string[]) => Record<string, CustomEdge>;
+  cleanupEdgesForNodes: (nodeIds: string[]) => Record<string, Edge>;
 }
 
 const defaultDialogueNodeData: NodeData[NodeType.Dialogue] = {
@@ -84,7 +85,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       return state;
     }),
 
-  cleanupEdgesForNodes: (nodeIds: string[]): Record<string, CustomEdge> => {
+  cleanupEdgesForNodes: (nodeIds: string[]): Record<string, Edge> => {
     const projectStore = useProjectStore.getState();
     const currentScene = projectStore.getCurrentScene();
     if (!currentScene) return {};
@@ -174,7 +175,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       return state;
     }),
 
-  addEdge: (edge: CustomEdge): void =>
+  addEdge: (edge: Edge): void =>
     set((state) => {
       const projectStore = useProjectStore.getState();
       const currentScene = projectStore.getCurrentScene();
@@ -193,7 +194,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       const currentScene = projectStore.getCurrentScene();
       if (!currentScene) return state;
 
-      const { [nodeId]: removedNode, ...remainingNodes } = currentScene.nodes;
+      const { [nodeId]: _, ...remainingNodes } = currentScene.nodes;
       const remainingEdges = get().cleanupEdgesForNodes([nodeId]);
 
       projectStore.updateScene(currentScene.id, {
@@ -210,7 +211,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       const currentScene = projectStore.getCurrentScene();
       if (!currentScene) return state;
 
-      const { [edgeId]: removedEdge, ...remainingEdges } = currentScene.edges;
+      const { [edgeId]: _, ...remainingEdges } = currentScene.edges;
 
       projectStore.updateScene(currentScene.id, {
         edges: remainingEdges,
@@ -231,7 +232,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     return node;
   },
 
-  getEdge: (edgeId: string): CustomEdge | undefined => {
+  getEdge: (edgeId: string): Edge | undefined => {
     const projectStore = useProjectStore.getState();
     const currentScene = projectStore.getCurrentScene();
     if (!currentScene) return undefined;
@@ -249,7 +250,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     return currentScene ? Object.values(currentScene.nodes) : [];
   },
 
-  getEdgesArray: (): CustomEdge[] => {
+  getEdgesArray: (): Edge[] => {
     const projectStore = useProjectStore.getState();
     const currentScene = projectStore.getCurrentScene();
     return currentScene ? Object.values(currentScene.edges) : [];

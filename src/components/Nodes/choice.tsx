@@ -46,7 +46,7 @@ const ChoiceNode = ({ id }: NodeProps) => {
   };
 
   const handleRemoveChoice = (choiceId: string) => {
-    const { [choiceId]: removed, ...remaining } = data.choices;
+    const { [choiceId]: _, ...remaining } = data.choices;
     updateNode(id, {
       ...data,
       choices: remaining,

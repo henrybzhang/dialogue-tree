@@ -10,9 +10,10 @@ import {
   XYPosition,
   NodeChange,
   EdgeChange,
+  Edge,
 } from '@xyflow/react';
 import { useDrop, ConnectDropTarget } from 'react-dnd';
-import { CustomEdge, NodeType } from '@/src/components/types/CustomNodeTypes';
+import { NodeType } from '@/src/components/types/CustomNodeTypes';
 import DialogueNode from '@/src/components/Nodes/dialogue';
 import JumpNode from '@/src/components/Nodes/jump';
 import SwitchSceneNode from '@/src/components/Nodes/switchScene';
@@ -56,7 +57,7 @@ const Diagram = () => {
     (params: Connection) => {
       if (!params.source || !params.target) return;
 
-      const edge: CustomEdge = {
+      const edge: Edge = {
         ...params,
         id: `edge-${params.source}-${params.target}`,
         source: params.source,

@@ -91,7 +91,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   removeCharacter: (id) => {
     set((state) => {
-      const { [id]: removed, ...remaining } = state.characters;
+      const { [id]: _, ...remaining } = state.characters;
       return {
         ...state,
         characters: remaining,
@@ -134,7 +134,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   removeVariable: (id) => {
     set((state) => {
-      const { [id]: removed, ...remaining } = state.variables;
+      const { [id]: _, ...remaining } = state.variables;
       return {
         ...state,
         variables: remaining,
@@ -176,7 +176,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   removeFile: (id) => {
     set((state) => {
-      const { [id]: removed, ...remaining } = state.files;
+      const { [id]: _, ...remaining } = state.files;
       return {
         ...state,
         files: remaining,

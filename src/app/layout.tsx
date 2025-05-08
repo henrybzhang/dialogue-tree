@@ -1,6 +1,6 @@
 import '@mantine/core/styles.css';
 import '../styles/globals.css';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { theme } from '@/src/styles/theme';
 
@@ -9,7 +9,7 @@ export const metadata = {
   description: 'A tool for creating and editing dialogue trees',
 };
 
-export default function RootLayout({ children }: { children: any }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>

@@ -7,11 +7,11 @@ import { CustomNode, NodeData, NodeType } from '../types/CustomNodeTypes';
 
 type NodeChange = {
   nodeId: string;
-  newData: NodeData;
+  newData: NodeData[NodeType];
 };
 
 const TextEditor = () => {
-  const { getNodesArray, getEdgesArray, updateNode, updateEdges } = useSceneStore();
+  const { getNodesArray, getEdgesArray, updateNode } = useSceneStore();
   const [error, setError] = useState<string | null>(null);
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
 
@@ -41,7 +41,7 @@ const TextEditor = () => {
       updateNode(nodeChange.nodeId, { ...node.data, ...nodeChange.newData } as NodeData[NodeType]);
       setError(null);
     } catch (err) {
-      setError('Invalid syntax. Please check your formatting.');
+      setError(err as string);
     }
   };
 
@@ -69,11 +69,7 @@ const TextEditor = () => {
             ) : null}
           </div>
           <div style={{ flex: 1 }}>
-            <NodeTextArea
-              node={node}
-              onChange={(nodeChange: NodeChange) => handleNodeChange(nodeChange)}
-              indentLevel={level}
-            />
+            <NodeTextArea node={node} onChange={handleNodeChange} indentLevel={level} />
           </div>
         </div>
         {!isCollapsed && (
@@ -88,7 +84,7 @@ const TextEditor = () => {
                         <div style={{ flex: 1 }}>
                           <NodeTextArea
                             node={node}
-                            onChange={(nodeChange: NodeChange) => handleNodeChange(nodeChange)}
+                            onChange={handleNodeChange}
                             indentLevel={level + 1}
                             optionId={choiceId}
                           />
@@ -120,7 +116,7 @@ const TextEditor = () => {
                         <div style={{ flex: 1 }}>
                           <NodeTextArea
                             node={node}
-                            onChange={(nodeChange: NodeChange) => handleNodeChange(nodeChange)}
+                            onChange={handleNodeChange}
                             indentLevel={level + 1}
                             optionId={conditionId}
                           />
