@@ -1,15 +1,13 @@
 module.exports = {
     extends: [
         'plugin:@next/next/recommended',
-        'plugin:jest/recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:prettier/recommended'
     ],
-    plugins: ['testing-library', 'jest', '@typescript-eslint'],
+    plugins: ['@typescript-eslint'],
     overrides: [
         {
             files: ['**/?(*.)+(spec|test).[jt]s?(x)'],
-            extends: ['plugin:testing-library/react'],
         },
     ],
     parserOptions: {

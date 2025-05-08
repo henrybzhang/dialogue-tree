@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { CustomNodeType } from './CustomNodeTypes';
+import { NodeType } from './CustomNodeTypes';
 
 type Transform = {
   x: number;
@@ -13,7 +13,7 @@ type DraggableProps = {
 };
 
 type PanelDraggableProps = {
-  type: CustomNodeType;
+  type: NodeType;
   children: ReactNode;
 };
 

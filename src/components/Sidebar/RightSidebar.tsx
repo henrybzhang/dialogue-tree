@@ -473,7 +473,7 @@ const RightSidebar = ({ opened, onToggle }: RightSidebarProps) => {
           setEditModalOpen(false);
           setEditingItem(null);
         }}
-        title={`Edit ${editingItem?.type.charAt(0).toUpperCase() + editingItem?.type.slice(1)}`}
+        title={`Edit ${editingItem ? editingItem?.type.charAt(0).toUpperCase() + editingItem?.type.slice(1) : "undefined"}`}
       >
         {editingItem && (
           <Stack>

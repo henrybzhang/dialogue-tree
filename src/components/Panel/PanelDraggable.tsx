@@ -1,21 +1,26 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { PanelDraggableProps } from '@/src/components/types/DraggableProps';
 
 export function PanelDraggable(props: PanelDraggableProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
   const [{ isDragging }, drag] = useDrag(() => ({
-    // "type" is required. It is used by the "accept" specification of drop targets.
     type: 'PanelDraggable',
-    // The collect function utilizes a "monitor" instance (see the Overview for what this is)
-    // to pull important pieces of state from the DnD system.
+    item: { type: props.type },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-    item: { type: props.type },
   }));
 
+  useEffect(() => {
+    if (ref.current) {
+      drag(ref.current);
+    }
+  }, [ref, drag]);
+
   return (
-    <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+    <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }}>
       {props.children}
     </div>
   );
