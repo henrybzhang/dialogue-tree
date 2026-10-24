@@ -1,8 +1,7 @@
 import '@mantine/core/styles.css';
 import '../styles/globals.css';
 import React, { ReactNode } from 'react';
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
-import { theme } from '@/src/styles/theme';
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 
 export const metadata = {
   title: 'Dialogue Tree',
@@ -11,17 +10,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
-        <link rel="shortcut icon" href="/favicon.svg" />
-        {/*<meta*/}
-        {/*  name="viewport"*/}
-        {/*  content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"*/}
-        {/*/>*/}
       </head>
       <body>
-        <MantineProvider theme={theme}>{children}</MantineProvider>
+        <MantineProvider>{children}</MantineProvider>
       </body>
     </html>
   );

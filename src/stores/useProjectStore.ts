@@ -1,268 +1,220 @@
 import { create } from 'zustand';
-import { v4 as uuid } from 'uuid';
-import { VariableType, VariableTypeOption } from '@/src/components/types/GlobalContextType';
-import { Scene } from '@/src/components/types/CustomNodeTypes';
+import { persist } from 'zustand/middleware';
+import {
+  applyEdgeChanges,
+  applyNodeChanges,
+  Edge,
+  EdgeChange,
+  NodeChange,
+  XYPosition,
+} from '@xyflow/react';
+import {
+  Character,
+  CustomNode,
+  NodeData,
+  NodeType,
+  ProjectFile,
+  Scene,
+  Variable,
+} from '@/src/types';
 
-interface Character {
-  id: string;
-  name: string;
-}
+export const newId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
-interface Variable {
-  id: string;
-  name: string;
-  type: VariableTypeOption;
-  value: VariableType;
-}
+const without = <T>(record: Record<string, T>, id: string): Record<string, T> => {
+  const { [id]: _, ...rest } = record;
+  return rest;
+};
 
-interface File {
-  id: string;
-  name: string;
-  content: string;
-}
+const newScene = (name: string): Scene => ({ id: newId('scene'), name, nodes: {}, edges: {} });
+
+const newNodeData = (type: NodeType): NodeData[NodeType] => {
+  switch (type) {
+    case NodeType.Dialogue:
+      return { title: 'New Dialogue', characterId: '', dialogue: '' };
+    case NodeType.Choice:
+      return {
+        title: 'New Choice',
+        choices: { [newId('choice')]: 'Yes', [newId('choice')]: 'No' },
+      };
+    case NodeType.Jump:
+      return { title: 'New Jump', targetNodeId: '' };
+    case NodeType.SwitchScene:
+      return { title: 'New Switch Scene', nextSceneId: '' };
+    case NodeType.If:
+      return {
+        title: 'New If',
+        variableId: '',
+        conditions: { [newId('condition')]: { type: 'equals', value: '' } },
+      };
+  }
+};
+
+/** Apply fn to every node in every scene. */
+const mapAllNodes = (
+  scenes: Record<string, Scene>,
+  fn: (node: CustomNode) => CustomNode,
+): Record<string, Scene> =>
+  Object.fromEntries(
+    Object.values(scenes).map((scene) => [
+      scene.id,
+      {
+        ...scene,
+        nodes: Object.fromEntries(Object.values(scene.nodes).map((n) => [n.id, fn(n)])),
+      },
+    ]),
+  );
 
 interface ProjectState {
   characters: Record<string, Character>;
   variables: Record<string, Variable>;
-  files: Record<string, File>;
+  files: Record<string, ProjectFile>;
   scenes: Record<string, Scene>;
   currentSceneId: string;
-  addCharacter: (name: string, description?: string) => void;
+  addCharacter: (name: string) => void;
+  updateCharacter: (id: string, patch: Partial<Character>) => void;
   removeCharacter: (id: string) => void;
-  updateCharacter: (id: string, character: Partial<Character>) => void;
-  getCharacters: () => Character[];
-  addVariable: (name: string, type: VariableTypeOption, value: boolean | string | number) => void;
+  addVariable: (variable: Omit<Variable, 'id'>) => void;
+  updateVariable: (id: string, patch: Partial<Variable>) => void;
   removeVariable: (id: string) => void;
-  updateVariable: (id: string, variable: Partial<Variable>) => void;
-  getVariables: () => Variable[];
   addFile: (name: string, content: string) => void;
+  updateFile: (id: string, patch: Partial<ProjectFile>) => void;
   removeFile: (id: string) => void;
-  updateFile: (id: string, file: Partial<File>) => void;
-  getFiles: () => File[];
   addScene: (name: string) => void;
   switchScene: (sceneId: string) => void;
-  getCurrentScene: () => Scene | undefined;
-  updateScene: (sceneId: string, updates: Partial<Scene>) => void;
-  getScenes: () => Scene[];
-  getSceneIds: () => string[];
+  addNode: (type: NodeType, position: XYPosition) => void;
+  updateNode: (nodeId: string, data: NodeData[NodeType]) => void;
+  removeBranch: (nodeId: string, branchId: string) => void;
+  addEdge: (edge: Omit<Edge, 'id'>) => void;
+  onNodesChange: (changes: NodeChange<CustomNode>[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
 }
 
+const firstScene = newScene('Default Scene');
 const defaultCharacters = [
-  {
-    id: `character-${uuid()}`,
-    name: 'Jeff',
-  },
-  {
-    id: `character-${uuid()}`,
-    name: 'Sarah',
-  },
+  { id: newId('character'), name: 'Jeff' },
+  { id: newId('character'), name: 'Sarah' },
 ];
+const defaultVariable: Variable = {
+  id: newId('variable'),
+  name: 'Energy',
+  type: 'number',
+  value: 100,
+};
 
-const defaultVariables = [
-  {
-    id: `variable-${uuid()}`,
-    name: 'Energy',
-    type: 'number' as VariableTypeOption,
-    value: 100,
-  },
-];
-
-export const useProjectStore = create<ProjectState>((set, get) => ({
-  characters: Object.fromEntries(defaultCharacters.map((char) => [char.id, char])),
-  variables: Object.fromEntries(defaultVariables.map((v) => [v.id, v])),
-  files: {},
-  scenes: {},
-  currentSceneId: '',
-
-  addCharacter: (name, description) => {
-    const id = `character-${uuid()}`;
-    set((state) => ({
-      ...state,
-      characters: {
-        ...state.characters,
-        [id]: {
-          id,
-          name,
-          description,
-        },
-      },
-    }));
-  },
-
-  removeCharacter: (id) => {
-    set((state) => {
-      const { [id]: _, ...remaining } = state.characters;
-      return {
-        ...state,
-        characters: remaining,
-      };
-    });
-  },
-
-  updateCharacter: (id, character) => {
-    set((state) => ({
-      ...state,
-      characters: {
-        ...state.characters,
-        [id]: {
-          ...state.characters[id],
-          ...character,
-        },
-      },
-    }));
-  },
-
-  getCharacters: () => {
-    return Object.values(get().characters);
-  },
-
-  addVariable: (name, type, value) => {
-    const id = `variable-${uuid()}`;
-    set((state) => ({
-      ...state,
-      variables: {
-        ...state.variables,
-        [id]: {
-          id,
-          name,
-          type,
-          value,
-        },
-      },
-    }));
-  },
-
-  removeVariable: (id) => {
-    set((state) => {
-      const { [id]: _, ...remaining } = state.variables;
-      return {
-        ...state,
-        variables: remaining,
-      };
-    });
-  },
-
-  updateVariable: (id, variable) => {
-    set((state) => ({
-      ...state,
-      variables: {
-        ...state.variables,
-        [id]: {
-          ...state.variables[id],
-          ...variable,
-        },
-      },
-    }));
-  },
-
-  getVariables: () => {
-    return Object.values(get().variables);
-  },
-
-  addFile: (name, content) => {
-    const id = `file-${uuid()}`;
-    set((state) => ({
-      ...state,
-      files: {
-        ...state.files,
-        [id]: {
-          id,
-          name,
-          content,
-        },
-      },
-    }));
-  },
-
-  removeFile: (id) => {
-    set((state) => {
-      const { [id]: _, ...remaining } = state.files;
-      return {
-        ...state,
-        files: remaining,
-      };
-    });
-  },
-
-  updateFile: (id, file) => {
-    set((state) => ({
-      ...state,
-      files: {
-        ...state.files,
-        [id]: {
-          ...state.files[id],
-          ...file,
-        },
-      },
-    }));
-  },
-
-  getFiles: () => {
-    return Object.values(get().files);
-  },
-
-  addScene: (name: string): void => {
-    const id = `scene-${uuid()}`;
-    const newScene: Scene = {
-      id,
-      name,
-      nodes: {},
-      edges: {},
-    };
-
-    set((state) => {
-      const newScenes = { ...state.scenes, [id]: newScene };
-      // If this is the first scene, set it as current
-      const newCurrentSceneId = state.currentSceneId || id;
+export const useProjectStore = create<ProjectState>()(
+  persist(
+    (set) => {
+      const updateCurrentScene = (fn: (scene: Scene) => Partial<Scene>) =>
+        set((s) => {
+          const scene = s.scenes[s.currentSceneId];
+          return { scenes: { ...s.scenes, [scene.id]: { ...scene, ...fn(scene) } } };
+        });
 
       return {
-        ...state,
-        scenes: newScenes,
-        currentSceneId: newCurrentSceneId,
-      };
-    });
-  },
+        characters: Object.fromEntries(defaultCharacters.map((c) => [c.id, c])),
+        variables: { [defaultVariable.id]: defaultVariable },
+        files: {},
+        scenes: { [firstScene.id]: firstScene },
+        currentSceneId: firstScene.id,
 
-  switchScene: (sceneId: string): void => {
-    set((state) => {
-      const scene = state.scenes[sceneId];
-      if (!scene) return state;
-
-      return {
-        ...state,
-        currentSceneId: sceneId,
-      };
-    });
-  },
-
-  getCurrentScene: (): Scene | undefined => {
-    const state = get();
-    return state.scenes[state.currentSceneId];
-  },
-
-  updateScene: (sceneId: string, updates: Partial<Scene>): void => {
-    set((state) => {
-      const scene = state.scenes[sceneId];
-      if (!scene) return state;
-
-      return {
-        ...state,
-        scenes: {
-          ...state.scenes,
-          [sceneId]: {
-            ...scene,
-            ...updates,
-          },
+        addCharacter: (name) => {
+          const id = newId('character');
+          set((s) => ({ characters: { ...s.characters, [id]: { id, name } } }));
         },
+        updateCharacter: (id, patch) =>
+          set((s) => ({
+            characters: { ...s.characters, [id]: { ...s.characters[id], ...patch } },
+          })),
+        removeCharacter: (id) =>
+          set((s) => ({
+            characters: without(s.characters, id),
+            scenes: mapAllNodes(s.scenes, (n) =>
+              n.type === NodeType.Dialogue && n.data.characterId === id
+                ? { ...n, data: { ...n.data, characterId: '' } }
+                : n,
+            ),
+          })),
+
+        addVariable: (variable) => {
+          const id = newId('variable');
+          set((s) => ({ variables: { ...s.variables, [id]: { ...variable, id } } }));
+        },
+        updateVariable: (id, patch) =>
+          set((s) => ({ variables: { ...s.variables, [id]: { ...s.variables[id], ...patch } } })),
+        removeVariable: (id) =>
+          set((s) => ({
+            variables: without(s.variables, id),
+            scenes: mapAllNodes(s.scenes, (n) =>
+              n.type === NodeType.If && n.data.variableId === id
+                ? { ...n, data: { ...n.data, variableId: '' } }
+                : n,
+            ),
+          })),
+
+        addFile: (name, content) => {
+          const id = newId('file');
+          set((s) => ({ files: { ...s.files, [id]: { id, name, content } } }));
+        },
+        updateFile: (id, patch) =>
+          set((s) => ({ files: { ...s.files, [id]: { ...s.files[id], ...patch } } })),
+        removeFile: (id) => set((s) => ({ files: without(s.files, id) })),
+
+        addScene: (name) => {
+          const scene = newScene(name);
+          set((s) => ({ scenes: { ...s.scenes, [scene.id]: scene } }));
+        },
+        switchScene: (sceneId) => set({ currentSceneId: sceneId }),
+
+        addNode: (type, position) => {
+          const node = { id: newId('node'), type, position, data: newNodeData(type) } as CustomNode;
+          updateCurrentScene((scene) => ({ nodes: { ...scene.nodes, [node.id]: node } }));
+        },
+        updateNode: (nodeId, data) =>
+          updateCurrentScene((scene) => ({
+            nodes: {
+              ...scene.nodes,
+              [nodeId]: { ...scene.nodes[nodeId], data } as CustomNode,
+            },
+          })),
+        removeBranch: (nodeId, branchId) =>
+          updateCurrentScene((scene) => {
+            const node = scene.nodes[nodeId];
+            const data =
+              node.type === NodeType.Choice
+                ? { ...node.data, choices: without(node.data.choices, branchId) }
+                : node.type === NodeType.If
+                  ? { ...node.data, conditions: without(node.data.conditions, branchId) }
+                  : node.data;
+            return {
+              nodes: { ...scene.nodes, [nodeId]: { ...node, data } as CustomNode },
+              edges: Object.fromEntries(
+                Object.entries(scene.edges).filter(
+                  ([, e]) => !(e.source === nodeId && e.sourceHandle === branchId),
+                ),
+              ),
+            };
+          }),
+        addEdge: (edge) => {
+          const id = newId('edge');
+          updateCurrentScene((scene) => ({ edges: { ...scene.edges, [id]: { ...edge, id } } }));
+        },
+        onNodesChange: (changes) =>
+          updateCurrentScene((scene) => ({
+            nodes: Object.fromEntries(
+              applyNodeChanges(changes, Object.values(scene.nodes)).map((n) => [n.id, n]),
+            ),
+          })),
+        onEdgesChange: (changes) =>
+          updateCurrentScene((scene) => ({
+            edges: Object.fromEntries(
+              applyEdgeChanges(changes, Object.values(scene.edges)).map((e) => [e.id, e]),
+            ),
+          })),
       };
-    });
-  },
+    },
+    // Rehydrated from localStorage on mount (see page.tsx) so the static prerender matches.
+    { name: 'dialogue-tree', skipHydration: true },
+  ),
+);
 
-  getScenes: (): Scene[] => {
-    return Object.values(get().scenes);
-  },
-
-  getSceneIds: (): string[] => {
-    return Object.keys(get().scenes);
-  },
-}));
+export const useCurrentScene = () => useProjectStore((s) => s.scenes[s.currentSceneId]);
